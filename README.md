@@ -78,7 +78,7 @@ Getting this project up and running is as easy as enjoying a cold beer (or two).
     docker-compose exec app php artisan db:seed --class=UserSeeder
 
 Or symply:
-    ```bash
+
     (docker-compose up -d \
     && docker-compose exec app php artisan migrate \
     && docker-compose exec app php artisan test \
