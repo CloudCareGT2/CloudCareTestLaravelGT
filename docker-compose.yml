@@ -1,0 +1,67 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: cloud
+        uid: 1000
+      context: .
+      dockerfile: Dockerfile
+    image: cloud/php
+    container_name: cloudcare-test-laravel-gt
+    restart: unless-stopped
+    tty: true
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_DATABASE: cloudcare_test_laravel_gt
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+    depends_on:
+      PostgreSQL:
+        condition: service_healthy
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  PostgreSQL:
+    image: postgres:14
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: cloudcare_test_laravel_gt
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5437:5432"
+    networks:
+      app-network:
+        aliases:
+          - database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx-logs:/var/log/nginx
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
